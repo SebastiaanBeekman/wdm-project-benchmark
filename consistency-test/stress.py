@@ -12,11 +12,12 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%I:%M:%S')
 logger = logging.getLogger(__name__)
 
-tmp_folder_path: str = os.path.join(gettempdir(), 'wdm_consistency_test')
+# tmp_folder_path: str = os.path.join(gettempdir(), 'wdm_consistency_test')
+tmp_folder_path: str = 'wdm_consistency_test'
 
 NUMBER_OF_ORDERS = 1000
 
-with open(os.path.join('..', 'urls.json')) as f:
+with open('urls.json') as f:
     urls = json.load(f)
     ORDER_URL = urls['ORDER_URL']
     PAYMENT_URL = urls['PAYMENT_URL']
@@ -32,7 +33,25 @@ async def create_order(session, url):
 async def post_and_get_status(session, url, checkout=None):
     async with session.post(url) as resp:
         if checkout:
-            if 400 <= resp.status < 500:
+            if resp.status == 451:
+                log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} STOCK __OUR_LOG__\n"
+                checkout[2].write(log)
+            elif resp.status == 431:
+                log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} CREDIT __OUR_LOG__\n"
+                checkout[2].write(log)
+            elif resp.status == 409:
+                log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} CONC __OUR_LOG__\n"
+                checkout[2].write(log)
+            elif resp.status == 500:
+                log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} SERVER STOCK __OUR_LOG__\n"
+                checkout[2].write(log)
+            elif resp.status == 501:
+                log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} SERVER CREDIT __OUR_LOG__\n"
+                checkout[2].write(log)
+            elif resp.status == 418:
+                log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} LOW __OUR_LOG__\n"
+                checkout[2].write(log)
+            elif 400 <= resp.status < 500:
                 log = f"CHECKOUT | ORDER: {checkout[0]} USER: {checkout[1]} FAIL __OUR_LOG__\n"
                 checkout[2].write(log)
             else:
